@@ -1,3 +1,4 @@
+// Package db deals with database to store informations.
 package db
 
 import (
@@ -24,25 +25,48 @@ type data struct {
 	payload       []byte
 }
 
-func DB() *bolt.DB {
-	if db == nil {
-		once.Do(func() {
-			dbPointer, err := bolt.Open(fmt.Sprintf("%s.db", dbName), 0600, nil)
-			db = dbPointer
-			tg.HandleErr(err)
-
-			err = db.Update(func(tx *bolt.Tx) error {
-				_, err = tx.CreateBucketIfNotExists([]byte(dataBucket))
-				tg.HandleErr(err)
-				return err
-			})
-			tg.HandleErr(err)
-		})
-	}
-	return db
+// Create new bucket.
+func createBucket() {
+	err := db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(dataBucket))
+		tg.HandleErr(err)
+		return err
+	})
+	tg.HandleErr(err)
 }
 
+// Reset bucket.
+func ResetBucket() {
+	err := db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(dataBucket))
+		err := bucket.Put([]byte(hash), data)
+		return err
+	})
+	tg.HandleErr(err)
+}
+
+// Restores existing database.
+func restore() {}
+
+// Update database informations.
+func Update() {}
+
+// Handles database by conditions.
 func Start() {
 	fmt.Println("db called")
-	db = DB()
+
+	dbPointer, err := bolt.Open(fmt.Sprintf("%s.db", dbName), 0600, nil)
+	db = dbPointer
+	tg.HandleErr(err)
+
+	// if not exists, "create" & "reset"
+	if db == nil {
+		createBucket()
+		ResetBucket()
+	} else {
+		// lastUpdatedAt :=
+		// if exists and valid, "restore"
+		// if exists but expired, "Reset"
+
+	}
 }
