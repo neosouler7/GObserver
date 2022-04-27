@@ -1,6 +1,7 @@
 *.json
 *.db
 *.db.lock
+*.log
 
 # Binaries for programs and plugins
 *.exe

@@ -2,29 +2,43 @@
 package main
 
 import (
-	"sync"
+	"strconv"
+	"time"
 
-	"github.com/neosouler7/GObserver/db"
+	"github.com/neosouler7/GObserver/alog"
 )
 
 func main() {
-	var wg sync.WaitGroup
-	wg.Add(1) // cpu, db, tg
-
-	// go func() {
-	// 	defer wg.Done()
-	// 	cpu.Collect()
-	// }()
-
-	// go func() {
-	// 	defer wg.Done()
-	// 	tg.Start()
-	// }()
+	go alog.Start()
 
 	go func() {
-		defer wg.Done()
-		db.Start()
+		for i := 1; i < 20; i++ {
+			n := strconv.Itoa(i)
+			println(n)
+			alog.LogC <- n
+		}
 	}()
 
-	wg.Wait()
+	time.Sleep(1 * time.Second)
+	// close(alog.LogC)
+
+	// var wg sync.WaitGroup
+	// wg.Add(1) // cpu, db, tg
+
+	// // go func() {
+	// // 	defer wg.Done()
+	// // 	cpu.Collect()
+	// // }()
+
+	// // go func() {
+	// // 	defer wg.Done()
+	// // 	tg.Start()
+	// // }()
+
+	// go func() {
+	// 	defer wg.Done()
+	// 	db.Start()
+	// }()
+
+	// wg.Wait()
 }

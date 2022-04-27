@@ -1,3 +1,4 @@
+// Package utils provides frequent used functions among project.
 package utils
 
 func Contains[T comparable](s []T, a T) bool {

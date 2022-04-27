@@ -10,6 +10,15 @@ import (
 	"github.com/neosouler7/GObserver/utils"
 )
 
+type asString struct {
+	s string
+}
+
+// Returns error as a string.
+func (e *asString) Error() string {
+	return e.s
+}
+
 type botConfig struct {
 	token        string
 	chatId       int64
@@ -83,12 +92,12 @@ func listenMsg(bc *botConfig, bot *tgbotapi.BotAPI) {
 			msgText = "Wrong command :("
 		}
 
-		SendMsg(bc, bot, msgText)
+		SendMsg(msgText)
 	}
 }
 
 // Send tg message and handle errors.
-func SendMsg(bc *botConfig, bot *tgbotapi.BotAPI, msgText string) {
+func SendMsg(msgText string) {
 	msg := tgbotapi.NewMessage(bc.chatId, msgText)
 	if _, err := bot.Send(msg); err != nil {
 		log.Panic(err)
@@ -98,7 +107,7 @@ func SendMsg(bc *botConfig, bot *tgbotapi.BotAPI, msgText string) {
 // Sends error message that system admin should know & shutdown.
 func HandleErr(err error) {
 	if err != nil {
-		SendMsg(err)
+		SendMsg(err.Error())
 	}
 }
 
