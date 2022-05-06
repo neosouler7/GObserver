@@ -2,71 +2,141 @@
 package db
 
 import (
+	"errors"
 	"fmt"
-	"sync"
+	"log"
+	"strconv"
+	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/neosouler7/GObserver/tg"
 )
 
 var (
-	db   *bolt.DB
-	once sync.Once
+	db *bolt.DB
 )
 
 const (
-	dbName     = "gobserver"
-	dataBucket = "data"
+	dbName        = "gobserver"
+	mold          = "mold"
+	moldBucket    = "moldBucket"
+	createdAt     = "createdAt"
+	LastUpdatedAt = "lastUpdatedAt"
 )
 
-type data struct {
-	createdAt     []byte
-	lastUpdatedAt []byte
-	payload       []byte
+type MoldStruct struct {
+	Payload []byte
+}
+
+// Returns of bucket exists.
+func bucketExists() bool {
+	err := db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(moldBucket))
+		if b == nil {
+			return nil
+		}
+		return errors.New("bucket exists")
+	})
+	if err == nil {
+		return false
+	}
+	return true
 }
 
 // Create new bucket.
-func createBucket() {
+func createBucket() error {
 	err := db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(dataBucket))
-		tg.HandleErr(err)
+		_, err := tx.CreateBucketIfNotExists([]byte(moldBucket))
+		if err != nil {
+			log.Fatalln(err)
+		}
 		return err
 	})
-	tg.HandleErr(err)
+	return err
 }
 
-// Reset bucket.
-func ResetBucket() {
+// Clears existing bucket.
+func clearBucket() error {
 	err := db.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(dataBucket))
-		err := bucket.Put([]byte(hash), data)
+		err := tx.DeleteBucket([]byte(moldBucket))
+		if err != nil {
+			log.Fatalln(err)
+		}
 		return err
 	})
-	tg.HandleErr(err)
+	return err
 }
 
-// Restores existing database.
-func restore() {}
+// Saves checkpoints.
+func SaveCheckPoint(checkpoint string) error {
+	err := db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(moldBucket))
+		checkPointAsByte := []byte(strconv.Itoa(int(time.Now().Unix())))
+		err := bucket.Put([]byte(checkpoint), checkPointAsByte)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		return err
+	})
+	return err
+}
 
-// Update database informations.
-func Update() {}
+// Loads checkpoints.
+func GetCheckPoint(checkpoint string) []byte {
+	var data []byte
+	err := db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(moldBucket))
+		data = bucket.Get([]byte(checkpoint))
+		return nil
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return data
+}
 
-// Handles database by conditions.
+// Update mold informations.
+func UpdateMold(data []byte) {
+	err := db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(moldBucket))
+		err := bucket.Put([]byte(mold), data)
+		return err
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+// Creates new bucket. (if exists, delete first)
+func InitBucket() error {
+	if bucketExists() {
+		err := clearBucket()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		log.Printf("Cleared %s bucket.", dbName)
+	}
+	err := createBucket()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Printf("Created new %s bucket.", dbName)
+
+	err = SaveCheckPoint(createdAt)
+	return err
+}
+
+// Starts db package.
 func Start() {
-	fmt.Println("db called")
-
 	dbPointer, err := bolt.Open(fmt.Sprintf("%s.db", dbName), 0600, nil)
 	db = dbPointer
-	tg.HandleErr(err)
-
-	// if not exists, "create" & "reset"
-	if db == nil {
-		createBucket()
-		ResetBucket()
-	} else {
-		// lastUpdatedAt :=
-		// if exists and valid, "restore"
-		// if exists but expired, "Reset"
-
+	if err != nil {
+		log.Fatalln(err)
 	}
+
+	err = InitBucket()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Printf("%s db synced.", dbName)
 }

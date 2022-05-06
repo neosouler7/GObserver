@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/neosouler7/GObserver/utils"
@@ -16,7 +17,7 @@ type asString struct {
 
 // Returns error as a string.
 func (e *asString) Error() string {
-	return e.s
+	return fmt.Sprintf("#ERROR\n\n%s", e.s)
 }
 
 type botConfig struct {
@@ -28,6 +29,11 @@ type botConfig struct {
 var (
 	bc  *botConfig
 	bot *tgbotapi.BotAPI
+)
+
+const (
+	TimeFormat            = "2006-01-02 15:04:05"
+	wrongCommandArguments = "Check your command's arguments."
 )
 
 // Initialize and returns tg config & bot object.
@@ -46,7 +52,7 @@ func initBot() (*botConfig, *tgbotapi.BotAPI) {
 	// botPointer.Debug = true
 
 	bot = botPointer
-	log.Printf("Authorized on account %s", bot.Self.UserName)
+	log.Printf("Authorized on account %s.", bot.Self.UserName)
 	return bc, bot
 }
 
@@ -74,6 +80,7 @@ func listenMsg(bc *botConfig, bot *tgbotapi.BotAPI) {
 			continue
 		}
 
+		args := update.Message.CommandArguments()
 		commander := utils.Contains(bc.commanderIds, update.Message.From.ID)
 
 		var msgText string
@@ -82,9 +89,25 @@ func listenMsg(bc *botConfig, bot *tgbotapi.BotAPI) {
 			msgText = whoami(update)
 		case "whereami":
 			msgText = whereami(update)
-		case "hi":
+		case "st":
 			if commander {
-				msgText = hi()
+				msgText = status()
+			} else { // someone is trying to approach!
+				msgText = getNonCommanderMsg(update)
+			}
+		case "cl":
+			if commander {
+				msgText = clear()
+			} else { // someone is trying to approach!
+				msgText = getNonCommanderMsg(update)
+			}
+		case "save":
+			if commander {
+				if args == "lastUpdatedAt" || args == "createdAt" {
+					msgText = save(args)
+				} else {
+					msgText = wrongCommandArguments
+				}
 			} else { // someone is trying to approach!
 				msgText = getNonCommanderMsg(update)
 			}
@@ -92,13 +115,14 @@ func listenMsg(bc *botConfig, bot *tgbotapi.BotAPI) {
 			msgText = "Wrong command :("
 		}
 
+		log.Printf("%s → %s", update.Message.Text, msgText)
 		SendMsg(msgText)
 	}
 }
 
 // Send tg message and handle errors.
 func SendMsg(msgText string) {
-	msg := tgbotapi.NewMessage(bc.chatId, msgText)
+	msg := tgbotapi.NewMessage(bc.chatId, fmt.Sprintf("%s\n\n%s", msgText, time.Now().Format(TimeFormat)))
 	if _, err := bot.Send(msg); err != nil {
 		log.Panic(err)
 	}

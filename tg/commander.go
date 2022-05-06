@@ -1,10 +1,18 @@
-// Package tg notifies stored informations to subscribers via telegram.
 package tg
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/neosouler7/GObserver/db"
+	"github.com/neosouler7/GObserver/utils"
+)
+
+const (
+	bucketClearMsg = "Bucket successfully cleared."
 )
 
 // Returns personal informations.
@@ -23,11 +31,34 @@ func whereami(update tgbotapi.Update) string {
 }
 
 // Check current collected data.
-func status() {}
+func status() string {
+	cp := fmt.Sprintf("%s", db.GetCheckPoint(db.LastUpdatedAt))
+	cpAsInt, err := strconv.Atoi(cp)
+	HandleErr(err)
+
+	tm := time.Unix(int64(cpAsInt), 0)
+	cpAsTime := fmt.Sprintf("%s", tm.Format(TimeFormat))
+	statusMsg := fmt.Sprintf("LastUpdatedAt: %s", cpAsTime)
+	return statusMsg
+}
 
 // Clears database manually.
-func clear() {}
+func clear() string {
+	err := db.InitBucket()
+	if err != nil {
+		return errors.New("something wrong").Error()
+	}
+	return bucketClearMsg
+}
 
-func hi() string {
-	return "hi"
+// to be deprecated. sample code.
+func save(args string) string {
+	s := "test"
+	m := db.MoldStruct{
+		Payload: []byte(s),
+	}
+	db.UpdateMold(utils.ToBytes(m))
+	HandleErr(db.SaveCheckPoint(args))
+	// db.SaveCheckPoint(db.LastUpdatedAt)
+	return "successfully saved!"
 }
