@@ -89,15 +89,21 @@ func listenMsg(bc *botConfig, bot *tgbotapi.BotAPI) {
 			msgText = whoami(update)
 		case "whereami":
 			msgText = whereami(update)
-		case "st":
-			if commander {
-				msgText = status()
-			} else { // someone is trying to approach!
-				msgText = getNonCommanderMsg(update)
-			}
 		case "cl":
 			if commander {
 				msgText = clear()
+			} else { // someone is trying to approach!
+				msgText = getNonCommanderMsg(update)
+			}
+		case "ob":
+			if commander {
+				msgText = orderbook(args)
+			} else { // someone is trying to approach!
+				msgText = getNonCommanderMsg(update)
+			}
+		case "st":
+			if commander {
+				msgText = status()
 			} else { // someone is trying to approach!
 				msgText = getNonCommanderMsg(update)
 			}

@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/neosouler7/GObserver/cpu"
 	"github.com/neosouler7/GObserver/db"
 	"github.com/neosouler7/GObserver/utils"
 )
@@ -30,6 +32,25 @@ func whereami(update tgbotapi.Update) string {
 	return fmt.Sprintf("Hi %d !\nYou're now in chat %d", messageFromID, chatId)
 }
 
+// Clears database manually.
+func clear() string {
+	err := db.InitBucket()
+	if err != nil {
+		return errors.New("something wrong").Error()
+	}
+	return bucketClearMsg
+}
+
+func orderbook(args string) string {
+	fmt.Printf(args)
+	s := strings.Split(args, " ")
+	price, ok := cpu.ObMap.Load(fmt.Sprintf("%s:%s:%s", s[0], s[1], s[2]))
+	if !ok {
+		HandleErr(errors.New("no such key on ObMap."))
+	}
+	return price.(string)
+}
+
 // Check current collected data.
 func status() string {
 	cp := fmt.Sprintf("%s", db.GetCheckPoint(db.LastUpdatedAt))
@@ -40,15 +61,6 @@ func status() string {
 	cpAsTime := fmt.Sprintf("%s", tm.Format(TimeFormat))
 	statusMsg := fmt.Sprintf("LastUpdatedAt: %s", cpAsTime)
 	return statusMsg
-}
-
-// Clears database manually.
-func clear() string {
-	err := db.InitBucket()
-	if err != nil {
-		return errors.New("something wrong").Error()
-	}
-	return bucketClearMsg
 }
 
 // to be deprecated. sample code.

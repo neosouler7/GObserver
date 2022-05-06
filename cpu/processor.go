@@ -1,2 +1,14 @@
-// Package cpu collects & processes & updates informations from cryto-exchange markets to database.
 package cpu
+
+import (
+	"fmt"
+	"time"
+)
+
+func processor() {
+	fmt.Println("processor start")
+	for {
+		fmt.Println("processor")
+		time.Sleep(time.Second * 3)
+	}
+}

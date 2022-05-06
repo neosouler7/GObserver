@@ -19,18 +19,14 @@ func GetCheckPoint  // loads timestamp
 func UpdateMold     // update
 
 ### cpu
-collector.go
-func upbit        // collect upbit ticker
-func korbit       // collect korbit ticker
-func bithumb      // collect bithumb ticker
+upb.go              // collect & save upbit ob & tx
+kbt.go              // collect & save korbit ob & tx
 
-processor.go
-type dddd struct {
+cpu.go              // main function of package
 
-}
+processor.go        // calculate & save hit count
 
-updater.go (let's use cron expression)
-func updater      // updates ddd struct to db
+updater.go          // saves to db every second
 
 ### useful commands
 boltbrowswer <filename.db>
