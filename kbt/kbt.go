@@ -1,4 +1,4 @@
-package cpu
+package kbt
 
 import (
 	"fmt"
@@ -13,8 +13,10 @@ import (
 )
 
 var (
-	kbtObConn *websocket.Conn
-	kbtTxConn *websocket.Conn
+	obConn *websocket.Conn
+	txConn *websocket.Conn
+	ObMap  sync.Map
+	TxMap  sync.Map
 )
 
 func kbtObSub(pairs []string) {
@@ -31,13 +33,13 @@ func kbtObSub(pairs []string) {
 	streams := fmt.Sprintf("\"orderbook:%s\"", strings.Join(streamSlice, ","))
 	msg := fmt.Sprintf("{\"accessToken\": \"null\", \"timestamp\": \"%d\", \"event\": \"korbit:subscribe\", \"data\": {\"channels\": [%s]}}", ts, streams)
 
-	ws.SendMsg(kbtObConn, msg)
+	ws.SendMsg(obConn, msg)
 }
 
-func kbtObRcv() {
+func obRcv() {
 	pairs := []string{"krw:btc", "krw:eth", "krw:xrp"}
 	for {
-		_, msgBytes, err := kbtObConn.ReadMessage()
+		_, msgBytes, err := obConn.ReadMessage()
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -50,10 +52,9 @@ func kbtObRcv() {
 			var rJson interface{}
 			utils.Bytes2Json(msgBytes, &rJson)
 
-			t := getTaker(KBT, rJson.(map[string]interface{}))
-			fmt.Println(t)
-			obKey := fmt.Sprintf("%s:%s:%s", t.exchange, t.market, t.symbol)
-			ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.askPrice, t.bidPrice))
+			t := utils.GetTaker(utils.KBT, rJson.(map[string]interface{}))
+			obKey := fmt.Sprintf("%s:%s:%s", t.Exchange, t.Market, t.Symbol)
+			ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.AskPrice, t.BidPrice))
 		} else {
 			if err != nil {
 				log.Fatalln(err)
@@ -63,17 +64,18 @@ func kbtObRcv() {
 }
 
 // Subscribes kbt's orderbook & transaction.
-func kbt() {
-	log.Printf("collector-kbt called.")
-	kbtObConn = ws.GetConn(KBT, OB)
-	kbtTxConn = ws.GetConn(KBT, TX)
+func Start() {
+	log.Printf("collector - kbt called.")
+	obConn = ws.GetConn(utils.KBT, utils.OB)
+	txConn = ws.GetConn(utils.KBT, utils.TX)
 
 	var wg sync.WaitGroup
 
 	// orderbook
 	wg.Add(1)
-	go kbtObRcv() // receive websocket msg
+	go obRcv() // receive websocket msg
 
 	// TODO. transaction
+
 	wg.Wait()
 }

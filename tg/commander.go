@@ -8,7 +8,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/neosouler7/GObserver/cpu"
+	"github.com/neosouler7/GObserver/collector"
 	"github.com/neosouler7/GObserver/db"
 	"github.com/neosouler7/GObserver/utils"
 )
@@ -44,7 +44,7 @@ func clear() string {
 func orderbook(args string) string {
 	fmt.Printf(args)
 	s := strings.Split(args, " ")
-	price, ok := cpu.ObMap.Load(fmt.Sprintf("%s:%s:%s", s[0], s[1], s[2]))
+	price, ok := collector.ObMap.Load(fmt.Sprintf("%s:%s:%s", s[0], s[1], s[2]))
 	if !ok {
 		HandleErr(errors.New("no such key on ObMap."))
 	}

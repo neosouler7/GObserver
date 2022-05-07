@@ -1,11 +1,11 @@
-package cpu
+package processor
 
 import (
 	"fmt"
 	"time"
 )
 
-func processor() {
+func Start() {
 	fmt.Println("processor start")
 	for {
 		fmt.Println("processor")

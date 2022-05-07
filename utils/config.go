@@ -10,6 +10,13 @@ import (
 	"strings"
 )
 
+var (
+	UPB string = "upb"
+	KBT string = "kbt"
+	OB  string = "orderbook"
+	TX  string = "transaction"
+)
+
 type config struct {
 	Tg    tgConfig
 	Pairs map[string]interface{}

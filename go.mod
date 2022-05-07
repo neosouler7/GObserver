@@ -5,9 +5,6 @@ go 1.18
 require (
 	github.com/boltdb/bolt v1.3.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
-)
-
-require (
 	github.com/br0xen/boltbrowser v0.0.0-20210531150353-7f10a81cece0 // indirect
 	github.com/br0xen/termbox-util v0.0.0-20170904143325-de1d4c83380e // indirect
 	github.com/google/uuid v1.3.0 // indirect

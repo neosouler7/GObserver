@@ -1,4 +1,4 @@
-package cpu
+package upb
 
 import (
 	"fmt"
@@ -14,22 +14,24 @@ import (
 )
 
 var (
-	upbObConn *websocket.Conn
-	upbTxConn *websocket.Conn
+	obConn *websocket.Conn
+	txConn *websocket.Conn
+	ObMap  sync.Map
+	TxMap  sync.Map
 )
 
 const (
-	upbObPingMsg string = "PING"
+	pingMsg string = "PING"
 )
 
-func upbObPing() {
+func obPing() {
 	for {
-		ws.SendMsg(upbObConn, upbObPingMsg)
+		ws.SendMsg(obConn, pingMsg)
 		time.Sleep(time.Second * 5)
 	}
 }
 
-func upbObSub(pairs []string) {
+func obSub(pairs []string) {
 	time.Sleep(time.Second)
 	var streamSlice []string
 	for _, pair := range pairs {
@@ -42,12 +44,12 @@ func upbObSub(pairs []string) {
 	streams := strings.Join(streamSlice, ",")
 	msg := fmt.Sprintf("[{'ticket':'%s'}, {'type': 'orderbook', 'codes': [%s]}]", uuid, streams)
 
-	ws.SendMsg(upbObConn, msg)
+	ws.SendMsg(obConn, msg)
 }
 
-func upbObRcv() {
+func obRcv() {
 	for {
-		_, msgBytes, err := upbObConn.ReadMessage()
+		_, msgBytes, err := obConn.ReadMessage()
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -58,35 +60,34 @@ func upbObRcv() {
 			var rJson interface{}
 			utils.Bytes2Json(msgBytes, &rJson)
 
-			t := getTaker(UPB, rJson.(map[string]interface{}))
-			fmt.Println(t)
-			obKey := fmt.Sprintf("%s:%s:%s", t.exchange, t.market, t.symbol)
-			ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.askPrice, t.bidPrice))
+			t := utils.GetTaker(utils.UPB, rJson.(map[string]interface{}))
+			obKey := fmt.Sprintf("%s:%s:%s", t.Exchange, t.Market, t.Symbol)
+			ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.AskPrice, t.BidPrice))
 		}
 	}
 }
 
 // Subscribes upb's orderbook & transaction.
-func upb() {
-	log.Printf("collector-upb called.")
-	upbObConn = ws.GetConn(UPB, OB)
-	upbTxConn = ws.GetConn(UPB, TX)
+func Start() {
+	log.Printf("collector - upb called.")
+	obConn = ws.GetConn(utils.UPB, utils.OB)
+	txConn = ws.GetConn(utils.UPB, utils.TX)
 
 	var wg sync.WaitGroup
 
 	// orderbook
 	wg.Add(1)
-	go upbObPing() // ping
+	go obPing() // ping
 
 	wg.Add(1)
 	pairs := []string{"krw:btc", "krw:eth", "krw:xrp"}
 	go func() {
-		upbObSub(pairs) // subscribe websocket stream
+		obSub(pairs) // subscribe websocket stream
 		wg.Done()
 	}()
 
 	wg.Add(1)
-	go upbObRcv() // receive websocket msg
+	go obRcv() // receive websocket msg
 
 	// TODO. transaction
 

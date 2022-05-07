@@ -18,16 +18,19 @@ func SaveCheckPoint // saves timestamp
 func GetCheckPoint  // loads timestamp 
 func UpdateMold     // update
 
-### cpu
+### collectors
+collector.go        // collects exchange's datas
+
+### processors
+processor.go        // calculate & save hit count
+
+### updaters
+updater.go          // saves to db every second
+
+### exchanges
 upb.go              // collect & save upbit ob & tx
 kbt.go              // collect & save korbit ob & tx
 
-cpu.go              // main function of package
-
-processor.go        // calculate & save hit count
-
-updater.go          // saves to db every second
-
-### useful commands
+# useful commands
 boltbrowswer <filename.db>
 godoc -http=localhost:6060 → http://localhost:6060/pkg/github.com/neosouler7/GObserver

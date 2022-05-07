@@ -1,11 +1,11 @@
-package cpu
+package updater
 
 import (
 	"fmt"
 	"time"
 )
 
-func updater() {
+func Start() {
 	fmt.Println("updater start")
 	for {
 		fmt.Println("updater")
