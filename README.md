@@ -7,8 +7,50 @@ Project GObserver is made up of 3 main and subsidiary parts.
 ### collectors
 collector.go        // collects exchange's datas
 
+* orderbook
+used in trade TAKER-TAKER.
+then, we should store orderbook price as TAKER struct.
+
+type taker struct {
+    exchange string
+    market string
+    symbol string
+    askPrice string // calculate target price
+    askVolume string // calculate target volume
+    bidPrice string // calculate target price
+    bidVolume string // calculate target volume
+    timestamp string
+}
+
+obMap[obKey("upb:krw:btc")] = taker(struct)
+
+* transaction
+used in trade MAKER-TAKER.
+we already have TAKER data, so save transaction data as MAKER struct.
+
+type maker struct {
+    exchange string
+    market string
+    symbol string
+    askPrice string
+    askVolume string // ignore if less then minAmount & should be bigger than taker's bidVolume
+    bidPrice string
+    bidVolume string // ignore if less then minAmount & should be bigger than taker's askVolume
+    timestamp string
+}
+
+txMap[obKey("upb:krw:btc")] = maker(struct)
+
 ### processors
 processor.go        // calculate collector's datas & save hit count
+
+loop possible combinations. (tradeType x exchange(nC2) x ASK/BID)
+
+* TAKER-TAKER
+compare TAKER's targetPrice(ASK/BID) of 2 exchanges.
+
+* MAKER-TAKER
+compare 2 exchanges MAKER vs TAKER ASK/BID price.
 
 ### updaters
 updater.go          // saves hit count map to db
