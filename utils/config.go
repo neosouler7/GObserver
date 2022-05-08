@@ -63,10 +63,9 @@ func TgConfig() tgConfig {
 // Returns pairs of certain exchange.
 func GetPairs(exchange string) []string {
 	var pairs []string
-	for market, symbols := range getConfig("Pairs").(map[string]interface{})[exchange].(map[string]interface{}) {
-		for _, symbolInfo := range symbols.([]interface{}) {
-			pairs = append(pairs, fmt.Sprintf("%s:%s", market, symbolInfo))
-		}
+	for _, pairInfo := range getConfig("Pairs").(map[string]interface{})[exchange].([]interface{}) {
+		s := strings.Split(pairInfo.(string), ":")
+		pairs = append(pairs, fmt.Sprintf("%s:%s", s[0], s[1]))
 	}
 	return pairs
 }

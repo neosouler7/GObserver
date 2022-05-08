@@ -1,3 +1,4 @@
+// Package updater loads processor's syncMap and stores to boltdb.
 package updater
 
 import (
@@ -5,6 +6,7 @@ import (
 	"time"
 )
 
+// Starts updater logic of "cpu".
 func Start() {
 	fmt.Println("updater start")
 	for {

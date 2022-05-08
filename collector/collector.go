@@ -1,8 +1,7 @@
-// Package collector loads exchange's orderbook and transactions datas.
+// Package collector loads exchange's ob & tx and stores on syncMap.
 package collector
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -12,17 +11,20 @@ import (
 
 var (
 	ObMap *sync.Map
+	TxMap *sync.Map
 )
 
+// Collects exchange's data and saves to collector's obMap.
 func collector() {
 	// TODO. according to pairs, calculate & store on collector's ObMap
 	for {
-		fmt.Println(upb.ObMap)
-		fmt.Println(kbt.ObMap)
+		// fmt.Println(upb.ObMap)
+		// fmt.Println(kbt.ObMap)
 		time.Sleep(time.Second)
 	}
 }
 
+// Starts collector logic of "cpu".
 func Start() {
 	var wg sync.WaitGroup
 

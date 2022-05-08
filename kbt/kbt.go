@@ -1,3 +1,4 @@
+// Package kbt provides korbit's ob & tx datas.
 package kbt
 
 import (
@@ -13,14 +14,15 @@ import (
 )
 
 var (
-	obConn *websocket.Conn
-	txConn *websocket.Conn
+	wsConn *websocket.Conn
 	ObMap  sync.Map
 	TxMap  sync.Map
 )
 
-func kbtObSub(pairs []string) {
+// Subscribes kbt's orderbook & transaction.
+func subscribe(pairs []string) {
 	time.Sleep(time.Second * 1)
+
 	var streamSlice []string
 	for _, pair := range pairs {
 		var pairInfo = strings.Split(pair, ":")
@@ -30,52 +32,80 @@ func kbtObSub(pairs []string) {
 	}
 
 	ts := time.Now().UnixNano() / 100000 / 10
-	streams := fmt.Sprintf("\"orderbook:%s\"", strings.Join(streamSlice, ","))
-	msg := fmt.Sprintf("{\"accessToken\": \"null\", \"timestamp\": \"%d\", \"event\": \"korbit:subscribe\", \"data\": {\"channels\": [%s]}}", ts, streams)
+	streamsOb := fmt.Sprintf("\"orderbook:%s\"", strings.Join(streamSlice, ","))
+	streamsTx := fmt.Sprintf("\"transaction:%s\"", strings.Join(streamSlice, ","))
+	msg := fmt.Sprintf("{\"accessToken\": \"null\", \"timestamp\": \"%d\", \"event\": \"korbit:subscribe\", \"data\": {\"channels\": [%s,%s]}}", ts, streamsOb, streamsTx)
 
-	ws.SendMsg(obConn, msg)
+	ws.SendMsg(wsConn, msg)
 }
 
-func obRcv() {
-	pairs := []string{"krw:btc", "krw:eth", "krw:xrp"}
+// Receives kbt's orderbook & transaction.
+func receive() {
+	pairs := utils.GetPairs(utils.KBT)
 	for {
-		_, msgBytes, err := obConn.ReadMessage()
+		_, msgBytes, err := wsConn.ReadMessage()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
 		if strings.Contains(string(msgBytes), "connected") {
-			kbtObSub(pairs) // just once
+			subscribe(pairs) // just once
 		} else if strings.Contains(string(msgBytes), "subscribe") {
 			continue
-		} else if strings.Contains(string(msgBytes), "push-orderbook") {
+		} else {
 			var rJson interface{}
 			utils.Bytes2Json(msgBytes, &rJson)
+			subject := rJson.(map[string]interface{})["data"].(map[string]interface{})["channel"]
 
-			t := utils.GetTaker(utils.KBT, rJson.(map[string]interface{}))
-			obKey := fmt.Sprintf("%s:%s:%s", t.Exchange, t.Market, t.Symbol)
-			ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.AskPrice, t.BidPrice))
-		} else {
-			if err != nil {
-				log.Fatalln(err)
+			switch subject {
+			case "orderbook":
+				fmt.Println("kbt orderbook rcv")
+				t := utils.GetTaker(utils.KBT, rJson.(map[string]interface{}))
+				obKey := fmt.Sprintf("%s:%s:%s", t.Exchange, t.Market, t.Symbol)
+				ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.AskPrice, t.BidPrice))
+
+			case "transaction":
+				// TODO
+				// map[data:map[amount:66.930000 channel:transaction currency_pair:xrp_krw price:754.1 taker:buy timestamp:1.651976579592e+12]
+				// event:korbit:push-transaction timestamp:1.65197657967e+12]
+				fmt.Println("kbt transaction rcv")
 			}
 		}
+
+		// {
+		// 	"accessToken": null,
+		// 	"event": "korbit:push-transaction",
+		// 	"timestamp" : 1389678052000,
+		// 	"data":
+		// 	{
+		// 	  "channel": "transaction",
+		// 	  "currency_pair": "btc_krw",
+		// 	  "timestamp" : 1389678052000,
+		// 	  "price" : "569000.7654835",
+		// 	  "amount" : "0.01000001",
+		// 	  "taker" : "buy"
+		// 	}
+		//   }
+		// } else {
+		// 	if err != nil {
+		// 		log.Fatalln(err)
+		// 	}
+		// }
 	}
 }
 
-// Subscribes kbt's orderbook & transaction.
+// Wakes up kbt's websocket logic.
 func Start() {
 	log.Printf("collector - kbt called.")
-	obConn = ws.GetConn(utils.KBT, utils.OB)
-	txConn = ws.GetConn(utils.KBT, utils.TX)
+	wsConn = ws.GetConn(utils.KBT)
 
 	var wg sync.WaitGroup
 
-	// orderbook
 	wg.Add(1)
-	go obRcv() // receive websocket msg
-
-	// TODO. transaction
+	go func() {
+		defer wg.Done()
+		receive() // receive websocket msg
+	}()
 
 	wg.Wait()
 }
