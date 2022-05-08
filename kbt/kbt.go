@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/neosouler7/GObserver/config"
 	"github.com/neosouler7/GObserver/utils"
 	"github.com/neosouler7/GObserver/ws"
 )
@@ -41,7 +42,7 @@ func subscribe(pairs []string) {
 
 // Receives kbt's orderbook & transaction.
 func receive() {
-	pairs := utils.GetPairs(utils.KBT)
+	pairs := config.GetPairs(config.KBT)
 	for {
 		_, msgBytes, err := wsConn.ReadMessage()
 		if err != nil {
@@ -60,7 +61,7 @@ func receive() {
 			switch subject {
 			case "orderbook":
 				fmt.Println("kbt orderbook rcv")
-				t := utils.GetTaker(utils.KBT, rJson.(map[string]interface{}))
+				t := utils.GetTaker(config.KBT, rJson.(map[string]interface{}))
 				obKey := fmt.Sprintf("%s:%s:%s", t.Exchange, t.Market, t.Symbol)
 				ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.AskPrice, t.BidPrice))
 
@@ -97,7 +98,7 @@ func receive() {
 // Wakes up kbt's websocket logic.
 func Start() {
 	log.Printf("collector - kbt called.")
-	wsConn = ws.GetConn(utils.KBT)
+	wsConn = ws.GetConn(config.KBT)
 
 	var wg sync.WaitGroup
 

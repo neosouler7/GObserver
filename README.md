@@ -1,14 +1,21 @@
 # GObserver
 Project GObserver is made up of 3 main and subsidiary parts.
-    - main       : cpu / db / tg 
-    - subsidiary : utils, asyncLogging etc 
+- main       : cpu / exchanges / db / tg 
+- subsidiary : utils, config etc 
 
 # Main Functions for each packages
-### tg
-func Start          // package start, init tg config/bot
-func listenMsg      // listens msg channel
-func SendMsg        // sends tg msg
-func HandleErr      // sends error as tg msg
+### collectors
+collector.go        // collects exchange's datas
+
+### processors
+processor.go        // calculate collector's datas & save hit count
+
+### updaters
+updater.go          // saves hit count map to db
+
+### exchanges
+upb.go              // collect & save upbit ob & tx
+kbt.go              // collect & save korbit ob & tx
 
 ### db
 func Start          // package start, init bolt DB
@@ -18,18 +25,11 @@ func SaveCheckPoint // saves timestamp
 func GetCheckPoint  // loads timestamp 
 func UpdateMold     // update
 
-### collectors
-collector.go        // collects exchange's datas
-
-### processors
-processor.go        // calculate & save hit count
-
-### updaters
-updater.go          // saves to db every second
-
-### exchanges
-upb.go              // collect & save upbit ob & tx
-kbt.go              // collect & save korbit ob & tx
+### tg
+func Start          // package start, init tg config/bot
+func listenMsg      // listens msg channel
+func SendMsg        // sends tg msg
+func HandleErr      // sends error as tg msg
 
 # useful commands
 boltbrowswer <filename.db>

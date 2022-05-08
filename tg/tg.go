@@ -8,6 +8,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/neosouler7/GObserver/config"
 	"github.com/neosouler7/GObserver/utils"
 )
 
@@ -38,7 +39,7 @@ const (
 
 // Initialize and returns tg config & bot object.
 func initBot() (*botConfig, *tgbotapi.BotAPI) {
-	c := utils.TgConfig()
+	c := config.TgConfig()
 	bc = &botConfig{
 		token:        c.Token,
 		chatId:       c.ChatId,

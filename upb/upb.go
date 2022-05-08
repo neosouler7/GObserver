@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/neosouler7/GObserver/config"
 	"github.com/neosouler7/GObserver/utils"
 	"github.com/neosouler7/GObserver/ws"
 )
@@ -34,7 +35,7 @@ func subscribe() {
 	time.Sleep(time.Second * 1)
 
 	var streamSlice []string
-	for _, pair := range utils.GetPairs(utils.UPB) {
+	for _, pair := range config.GetPairs(config.UPB) {
 		var pairInfo = strings.Split(pair, ":")
 		market, symbol := strings.ToUpper(pairInfo[0]), strings.ToUpper(pairInfo[1])
 
@@ -64,7 +65,7 @@ func receive() {
 			switch subject {
 			case "orderbook":
 				fmt.Println("upb orderbook rcv")
-				t := utils.GetTaker(utils.UPB, rJson.(map[string]interface{}))
+				t := utils.GetTaker(config.UPB, rJson.(map[string]interface{}))
 				obKey := fmt.Sprintf("%s:%s:%s", t.Exchange, t.Market, t.Symbol)
 				ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.AskPrice, t.BidPrice))
 
@@ -82,7 +83,7 @@ func receive() {
 // Wakes up upb's websocket logic.
 func Start() {
 	log.Printf("collector - upb called.")
-	wsConn = ws.GetConn(utils.UPB)
+	wsConn = ws.GetConn(config.UPB)
 
 	var wg sync.WaitGroup
 

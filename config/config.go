@@ -1,5 +1,5 @@
-// Package utils provides frequent used functions among project.
-package utils
+// Package config provides configuration datas of the project.
+package config
 
 import (
 	"encoding/json"

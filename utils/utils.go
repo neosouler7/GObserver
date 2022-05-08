@@ -9,6 +9,8 @@ import (
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/neosouler7/GObserver/config"
 )
 
 // Returns if a is contained in s.
@@ -86,7 +88,7 @@ func GetTaker(exchange string, rJson map[string]interface{}) *taker {
 	var askSlice, bidSlice []interface{}
 
 	switch exchange {
-	case UPB:
+	case config.UPB:
 		s := strings.Split(rJson["code"].(string), "-")
 		market, symbol = strings.ToLower(s[0]), strings.ToLower(s[1])
 
@@ -100,7 +102,7 @@ func GetTaker(exchange string, rJson map[string]interface{}) *taker {
 			bidSlice = append(bidSlice, bid)
 		}
 
-	case KBT:
+	case config.KBT:
 		s := strings.Split(rJson["data"].(map[string]interface{})["currency_pair"].(string), "_")
 		market, symbol = s[1], s[0]
 
@@ -116,7 +118,7 @@ func GetTaker(exchange string, rJson map[string]interface{}) *taker {
 			bidSlice = append(bidSlice, bid)
 		}
 	}
-	targetVolume := GetVolumeMap(exchange)[fmt.Sprintf("%s:%s", market, symbol)]
+	targetVolume := config.GetVolumeMap(exchange)[fmt.Sprintf("%s:%s", market, symbol)]
 
 	t.Exchange = exchange
 	t.Market = market
