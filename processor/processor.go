@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/neosouler7/GObserver/collector"
 )
 
 var (
@@ -19,8 +17,8 @@ func Start() {
 	for {
 		// TODO. calculate hit logic
 		fmt.Println("processor")
-		fmt.Println(collector.ObMap)
-		fmt.Println(collector.TxMap)
+		// fmt.Println(collector.ObMap)
+		// fmt.Println(collector.TxMap)
 		time.Sleep(time.Second * 3)
 	}
 }

@@ -60,16 +60,16 @@ func receive() {
 
 			switch subject {
 			case "orderbook":
-				fmt.Println("kbt orderbook rcv")
+				log.Printf("kbt orderbook rcv.")
 				t := utils.GetTaker(config.KBT, rJson.(map[string]interface{}))
 				obKey := fmt.Sprintf("%s:%s:%s", t.Exchange, t.Market, t.Symbol)
-				ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.AskPrice, t.BidPrice))
+				ObMap.Store(obKey, t)
 
 			case "transaction":
 				// TODO
 				// map[data:map[amount:66.930000 channel:transaction currency_pair:xrp_krw price:754.1 taker:buy timestamp:1.651976579592e+12]
 				// event:korbit:push-transaction timestamp:1.65197657967e+12]
-				fmt.Println("kbt transaction rcv")
+				log.Printf("kbt transaction rcv.")
 			}
 		}
 

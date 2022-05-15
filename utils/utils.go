@@ -51,15 +51,30 @@ func Bytes2Json(data []byte, i interface{}) {
 	}
 }
 
-type taker struct {
-	Exchange string
-	Market   string
-	Symbol   string
-	AskPrice string
-	BidPrice string
+// Format timestamp as millisecond unit.
+func formatTs(ts string) string {
+	if len(ts) < 13 {
+		add := strings.Repeat("0", 13-len(ts))
+		return fmt.Sprintf("%s%s", ts, add)
+	} else if len(ts) == 13 { // if millisecond
+		return ts
+	} else {
+		return ts[:13]
+	}
 }
 
-func getTargetPrice(volume string, orderbook interface{}) string {
+type Taker struct {
+	Exchange  string
+	Market    string
+	Symbol    string
+	AskPrice  string
+	AskVolume string
+	BidPrice  string
+	BidVolume string
+	Timestamp string
+}
+
+func getTargetPrice(volume string, orderbook interface{}) (string, string) {
 	currentVolume := 0.0
 	targetVolume, err := strconv.ParseFloat(volume, 64)
 	if err != nil {
@@ -76,24 +91,24 @@ func getTargetPrice(volume string, orderbook interface{}) string {
 
 		currentVolume += volume
 		if currentVolume >= targetVolume {
-			return obInfo[0]
+			return obInfo[0], fmt.Sprintf("%f", currentVolume)
 		}
 	}
-	return obSlice[len(obSlice)-1].([2]string)[0]
+	return obSlice[len(obSlice)-1].([2]string)[0], fmt.Sprintf("%f", currentVolume)
 }
 
-func GetTaker(exchange string, rJson map[string]interface{}) *taker {
-	t := &taker{}
+func GetTaker(exchange string, rJson map[string]interface{}) *Taker {
 	var market, symbol string
 	var askSlice, bidSlice []interface{}
+	var askPrice, askVolume, bidPrice, bidVolume, timestamp string
 
 	switch exchange {
 	case config.UPB:
 		s := strings.Split(rJson["code"].(string), "-")
 		market, symbol = strings.ToLower(s[0]), strings.ToLower(s[1])
+		timestamp = fmt.Sprintf("%d", int(rJson["timestamp"].(float64)))
 
 		obs := rJson["orderbook_units"].([]interface{})
-
 		for _, ob := range obs {
 			o := ob.(map[string]interface{})
 			ask := [2]string{fmt.Sprintf("%f", o["ask_price"]), fmt.Sprintf("%f", o["ask_size"])}
@@ -105,6 +120,7 @@ func GetTaker(exchange string, rJson map[string]interface{}) *taker {
 	case config.KBT:
 		s := strings.Split(rJson["data"].(map[string]interface{})["currency_pair"].(string), "_")
 		market, symbol = s[1], s[0]
+		timestamp = fmt.Sprintf("%d", int(rJson["data"].(map[string]interface{})["timestamp"].(float64)))
 
 		rData := rJson["data"]
 		askResponse := rData.(map[string]interface{})["asks"].([]interface{})
@@ -118,13 +134,21 @@ func GetTaker(exchange string, rJson map[string]interface{}) *taker {
 			bidSlice = append(bidSlice, bid)
 		}
 	}
+
 	targetVolume := config.GetVolumeMap(exchange)[fmt.Sprintf("%s:%s", market, symbol)]
 
-	t.Exchange = exchange
-	t.Market = market
-	t.Symbol = symbol
-	t.AskPrice = getTargetPrice(targetVolume, askSlice)
-	t.BidPrice = getTargetPrice(targetVolume, bidSlice)
+	askPrice, askVolume = getTargetPrice(targetVolume, askSlice)
+	bidPrice, bidVolume = getTargetPrice(targetVolume, bidSlice)
 
-	return t
+	t := Taker{
+		Exchange:  exchange,
+		Market:    market,
+		Symbol:    symbol,
+		AskPrice:  askPrice,
+		AskVolume: askVolume,
+		BidPrice:  bidPrice,
+		BidVolume: bidVolume,
+		Timestamp: formatTs(timestamp),
+	}
+	return &t
 }

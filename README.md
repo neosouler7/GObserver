@@ -15,11 +15,15 @@ type taker struct {
     exchange string
     market string
     symbol string
-    askPrice string // calculate target price
-    askVolume string // calculate target volume
-    bidPrice string // calculate target price
-    bidVolume string // calculate target volume
-    timestamp string
+    askPrice string // ask[0]
+    askVolume string // ask[0]
+    bidPrice string // bid[0]
+    bidVolume string // bid[0]
+    targetAskPrice string // sumOver target
+    targetAskVolume string // sumOver target
+    targetBidPrice string // sumOver target
+    targetBidVolume string // sumOver target
+    timestamp string // returned timestamp
 }
 
 obMap[obKey("upb:krw:btc")] = taker(struct)

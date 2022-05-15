@@ -60,6 +60,15 @@ func TgConfig() tgConfig {
 	return getConfig("Tg").(tgConfig)
 }
 
+// Return exchanges of config.
+func GetExchanges() []string {
+	var exchanges []string
+	for exchange, _ := range getConfig("Pairs").(map[string]interface{}) {
+		exchanges = append(exchanges, exchange)
+	}
+	return exchanges
+}
+
 // Returns pairs of certain exchange.
 func GetPairs(exchange string) []string {
 	var pairs []string

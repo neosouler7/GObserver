@@ -64,17 +64,17 @@ func receive() {
 
 			switch subject {
 			case "orderbook":
-				fmt.Println("upb orderbook rcv")
+				log.Printf("upb orderbook rcv.")
 				t := utils.GetTaker(config.UPB, rJson.(map[string]interface{}))
 				obKey := fmt.Sprintf("%s:%s:%s", t.Exchange, t.Market, t.Symbol)
-				ObMap.Store(obKey, fmt.Sprintf("%s|%s", t.AskPrice, t.BidPrice))
+				ObMap.Store(obKey, t)
 
 			case "trade":
 				// TODO.
 				// map[ask_bid:BID change:FALL change_price:49000 code:KRW-ETH prev_closing_price:3.456e+06 sequential_id:1.651975281000001e+15
 				// stream_type:REALTIME timestamp:1.651975281892e+12 trade_date:2022-05-08 trade_price:3.407e+06 trade_time:02:01:21
 				// trade_timestamp:1.651975281e+12 trade_volume:0.29168568 type:trade]
-				fmt.Println("upb transaction rcv")
+				log.Printf("upb transaction rcv.")
 			}
 		}
 	}
